@@ -114,7 +114,9 @@ test('Assert individual results are displayed correctly', async ({ page }) => {
             j + 1
           }]`
         );
-        await expect(resultRow.locator('xpath=./div[2]')).toContainText(JSON.parse(choice.Choice).en);
+        await expect(resultRow.locator('xpath=./div[2]')).toContainText(
+          JSON.parse(choice.Choice).en
+        );
         if (result.at(j)) {
           await expect(resultRow.getByRole('checkbox')).toBeChecked();
         } else {

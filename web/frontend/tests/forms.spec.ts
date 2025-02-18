@@ -4,7 +4,6 @@ import { assertHasFooter, assertHasNavBar, initI18n, logIn, setUp } from './shar
 import {
   SCIPER_ADMIN,
   SCIPER_OTHER_ADMIN,
-  SCIPER_OTHER_USER,
   SCIPER_USER,
   mockDKGActors as mockAPIDKGActors,
   mockAddRole,
@@ -151,11 +150,7 @@ test('Assert "Add voters" button allows to add voters', async ({ page, baseURL }
       request.method() === 'POST' &&
       body.permission === 'vote' &&
       body.subject === FORMID &&
-      body.userIds.toString() === [
-        SCIPER_OTHER_ADMIN,
-        SCIPER_ADMIN,
-        SCIPER_USER,
-      ].join(',')
+      body.userIds.toString() === [SCIPER_OTHER_ADMIN, SCIPER_ADMIN, SCIPER_USER].join(',')
     );
   });
   await page.getByTestId('addVotersButton').click();
