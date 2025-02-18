@@ -144,19 +144,20 @@ test('Assert "Add voters" button allows to add voters', async ({ page, baseURL }
   await setUpMocks(page, 0, 6);
   await mockAddRole(page);
   await logIn(page, SCIPER_OTHER_ADMIN);
-  // we expect one call per new voter
-  for (const sciper of [SCIPER_OTHER_ADMIN, SCIPER_ADMIN, SCIPER_USER]) {
-    page.waitForRequest(async (request) => {
-      const body = await request.postDataJSON();
-      return (
-        request.url() === `${baseURL}/api/add_role` &&
-        request.method() === 'POST' &&
-        body.permission === 'vote' &&
-        body.subject === FORMID &&
-        body.userId.toString() === sciper
-      );
-    });
-  }
+  page.waitForRequest(async (request) => {
+    const body = await request.postDataJSON();
+    return (
+      request.url() === `${baseURL}/api/add_role` &&
+      request.method() === 'POST' &&
+      body.permission === 'vote' &&
+      body.subject === FORMID &&
+      body.userIds.toString() === [
+        SCIPER_OTHER_ADMIN,
+        SCIPER_ADMIN,
+        SCIPER_USER,
+      ].join(',')
+    );
+  });
   await page.getByTestId('addVotersButton').click();
   // menu should be visible
   const textbox = await page.getByRole('textbox', { name: 'SCIPERs' });
