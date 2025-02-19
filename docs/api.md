@@ -637,7 +637,7 @@ Return:
 
 ```json
 {
-   "<SCIPER>", "<SCIPER>", "..."
+   "Admins":["<SCIPER>", "<SCIPER>", "..."]
 }
 ```
 

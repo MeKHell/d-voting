@@ -548,7 +548,7 @@ func (form *form) DeleteForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "the form does not exist", http.StatusNotFound)
 		return
 	}
-	
+
 	// get the signed request
 	signed, err := ptypes.NewSignedRequest(r.Body)
 	if err != nil {
@@ -643,31 +643,22 @@ func (form *form) RemoveAdmin(w http.ResponseWriter, r *http.Request) {
 
 // GET /adminlist
 func (form *form) AdminList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+
 	adminList, err := types.AdminListFromStore(form.context, form.adminFac, form.orderingSvc.GetStore(), evoting.AdminListId)
-	if err != nil {
+	if err != nil && err.Error() != "No list found" {
 		InternalError(w, r, xerrors.Errorf("failed to get form: %v", err), nil)
 		return
 	}
-
+	adminsAsStr := make([]string, len(adminList.AdminList))
 	// Used to check whether it is the last SCIPER printed
-	count := 0
-	lenAdminList := len(adminList.AdminList)
-
-	myAdminList := "{"
-	for id := range adminList.AdminList {
-		count++
-
+	for i := range adminList.AdminList {
 		// If last element, does not add ', ' otherwise add ', '
-		if count == lenAdminList {
-			myAdminList += strconv.Itoa(adminList.AdminList[id])
-		} else {
-			myAdminList += strconv.Itoa(adminList.AdminList[id]) + ", "
-		}
-
+		adminsAsStr[i] = strconv.Itoa(adminList.AdminList[i])
 	}
-	myAdminList += "}"
-
-	txnmanager.SendResponse(w, myAdminList)
+	response := ptypes.GetAdminsResponse{Admins: adminsAsStr}
+	txnmanager.SendResponse(w, response)
 }
 
 // POST /forms/{formID}/addowner
