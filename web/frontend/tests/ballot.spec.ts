@@ -71,7 +71,7 @@ test('Assert ballot is displayed properly', async ({ page }) => {
     await expect(
       page.getByText(i18n.t('selectBetween', { minSelect: select.MinN, maxSelect: select.MaxN }))
     ).toBeVisible();
-    for (const choice of select.Choices.map((x) => JSON.parse(x))) {
+    for (const choice of select.Choices.map((x) => JSON.parse(x.Choice))) {
       await expect(page.getByRole('checkbox', { name: choice.en })).toBeVisible();
     }
   }
@@ -100,7 +100,7 @@ test('Assert minimum/maximum number of choices are handled correctly', async ({ 
     await test.step(
       `Assert maximum number of choices (${select.MaxN}) are handled correctly`,
       async () => {
-        for (const choice of select.Choices.map((x) => JSON.parse(x))) {
+        for (const choice of select.Choices.map((x) => JSON.parse(x.Choice))) {
           await page.getByRole('checkbox', { name: choice.en }).setChecked(true);
         }
         await castVoteButton.click();
@@ -134,12 +134,12 @@ test('Assert that correct number of choices are accepted', async ({ page, baseUR
   });
   await page
     .getByRole('checkbox', {
-      name: JSON.parse(Form.Configuration.Scaffold.at(0).Selects.at(0).Choices.at(0)).en,
+      name: JSON.parse(Form.Configuration.Scaffold.at(0).Selects.at(0).Choices.at(0).Choice).en,
     })
     .setChecked(true);
   await page
     .getByRole('checkbox', {
-      name: JSON.parse(Form.Configuration.Scaffold.at(1).Selects.at(0).Choices.at(0)).en,
+      name: JSON.parse(Form.Configuration.Scaffold.at(1).Selects.at(0).Choices.at(0).Choice).en,
     })
     .setChecked(true);
   await page.getByRole('button', { name: i18n.t('castVote') }).click();

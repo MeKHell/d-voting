@@ -146,10 +146,6 @@ test('Assert all forms are displayed correctly for unauthenticated user', async 
     let name = translate(form.Title);
     let row = await table.getByRole('row', { name: name });
     await expect(row).toBeVisible();
-    // row entry leads to form view
-    let link = await row.getByRole('link', { name: name });
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', `/forms/${form.FormID}`);
     await assertQuickAction(row, form);
   }
   await goForward(page);

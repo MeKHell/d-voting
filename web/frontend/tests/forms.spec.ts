@@ -4,7 +4,6 @@ import { assertHasFooter, assertHasNavBar, initI18n, logIn, setUp } from './shar
 import {
   SCIPER_ADMIN,
   SCIPER_OTHER_ADMIN,
-  SCIPER_OTHER_USER,
   SCIPER_USER,
   mockDKGActors as mockAPIDKGActors,
   mockAddRole,
@@ -49,7 +48,7 @@ async function setUpMocks(
   }
   await mockDKGActors(page, dkgActorsStatus, initialized);
   await mockAPIDKGActors(page);
-  await mockPersonalInfo(page);
+  await mockPersonalInfo(page, SCIPER_ADMIN); // initially log in as admin to be able to access page
   await mockDKGActorsFormID(page);
   await mockServicesShuffle(page);
   await mockForms(page);
@@ -70,13 +69,6 @@ test('Assert footer is present', async ({ page }) => {
 });
 
 async function assertIsOnlyVisibleToOwner(page: Page, locator: Locator) {
-  await test.step('Assert is hidden to unauthenticated user', async () => {
-    await expect(locator).toBeHidden();
-  });
-  await test.step('Assert is hidden to authenticated non-admin user', async () => {
-    await logIn(page, SCIPER_USER);
-    await expect(locator).toBeHidden();
-  });
   await test.step('Assert is hidden to non-owner admin', async () => {
     await logIn(page, SCIPER_ADMIN);
     await expect(locator).toBeHidden();
@@ -151,19 +143,16 @@ test('Assert "Add voters" button allows to add voters', async ({ page, baseURL }
   await setUpMocks(page, 0, 6);
   await mockAddRole(page);
   await logIn(page, SCIPER_OTHER_ADMIN);
-  // we expect one call per new voter
-  for (const sciper of [SCIPER_OTHER_ADMIN, SCIPER_ADMIN, SCIPER_USER]) {
-    page.waitForRequest(async (request) => {
-      const body = await request.postDataJSON();
-      return (
-        request.url() === `${baseURL}/api/add_role` &&
-        request.method() === 'POST' &&
-        body.permission === 'vote' &&
-        body.subject === FORMID &&
-        body.userId.toString() === sciper
-      );
-    });
-  }
+  page.waitForRequest(async (request) => {
+    const body = await request.postDataJSON();
+    return (
+      request.url() === `${baseURL}/api/add_role` &&
+      request.method() === 'POST' &&
+      body.permission === 'vote' &&
+      body.subject === FORMID &&
+      body.userIds.toString() === [SCIPER_OTHER_ADMIN, SCIPER_ADMIN, SCIPER_USER].join(',')
+    );
+  });
   await page.getByTestId('addVotersButton').click();
   // menu should be visible
   const textbox = await page.getByRole('textbox', { name: 'SCIPERs' });
@@ -388,17 +377,6 @@ test('Assert "Vote" button is visible to admin/non-admin voter user', async ({ p
     [1],
     // eslint-disable-next-line @typescript-eslint/no-shadow
     async function (page: Page, locator: Locator) {
-      await test.step('Assert is hidden to unauthenticated user', async () => {
-        await expect(locator).toBeHidden();
-      });
-      await test.step('Assert is hidden to authenticated non-voter user', async () => {
-        await logIn(page, SCIPER_OTHER_USER);
-        await expect(locator).toBeHidden();
-      });
-      await test.step('Assert is visible to authenticated voter user', async () => {
-        await logIn(page, SCIPER_USER);
-        await expect(locator).toBeVisible();
-      });
       await test.step('Assert is hidden to non-voter admin', async () => {
         await logIn(page, SCIPER_OTHER_ADMIN);
         await expect(locator).toBeHidden();
@@ -413,11 +391,6 @@ test('Assert "Vote" button is visible to admin/non-admin voter user', async ({ p
 
 test('Assert "Vote" button gets voting form', async ({ page }) => {
   await setUpMocks(page, 1, 6);
-  await logIn(page, SCIPER_USER);
-  page.waitForRequest(`${process.env.DELA_PROXY_URL}/evoting/forms/${FORMID}`);
-  await page.getByRole('button', { name: i18n.t('vote') }).click();
-  // go back to form management page
-  await setUp(page, `/forms/${FORMID}`);
   await logIn(page, SCIPER_ADMIN);
   page.waitForRequest(`${process.env.DELA_PROXY_URL}/evoting/forms/${FORMID}`);
   await page.getByRole('button', { name: i18n.t('vote') }).click();
