@@ -80,3 +80,7 @@ type HTTPError struct {
 	Message string
 	Args    map[string]interface{}
 }
+
+type GetAdminsResponse struct {
+	Admins []string
+}
