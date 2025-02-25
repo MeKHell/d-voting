@@ -20,6 +20,18 @@ export const PERMISSIONS = {
   },
 };
 
+export const roleActions = {
+  ADMIN: [
+    ['', PERMISSIONS.SUBJECTS.ROLES, PERMISSIONS.ACTIONS.LIST],
+    ['', PERMISSIONS.SUBJECTS.ROLES, PERMISSIONS.ACTIONS.ADD],
+    ['', PERMISSIONS.SUBJECTS.ROLES, PERMISSIONS.ACTIONS.REMOVE],
+    ['', PERMISSIONS.SUBJECTS.PROXIES, PERMISSIONS.ACTIONS.LIST],
+    ['', PERMISSIONS.SUBJECTS.PROXIES, PERMISSIONS.ACTIONS.ADD],
+    ['', PERMISSIONS.SUBJECTS.PROXIES, PERMISSIONS.ACTIONS.REMOVE],
+  ],
+  OWNER: ['', PERMISSIONS.SUBJECTS.ELECTION, PERMISSIONS.ACTIONS.CREATE],
+};
+
 let authEnforcer: Enforcer;
 
 /*
@@ -81,11 +93,15 @@ export async function revokeUserPermissionToOwnElection(userID: string, Election
 // an object to the action authorized
 // list[0] contains the policies so list[i][0] is the sciper
 // list[i][1] is the subject and list[i][2] is the action
-export function setMapAuthorization(list: string[][]): Map<String, Array<String>> {
+export function setMapAuthorization(
+  list: string[][],
+  isAdmin: boolean
+): Map<String, Array<String>> {
+  const authList = isAdmin ? roleActions.ADMIN : list;
   const userRights = new Map<String, Array<String>>();
-  for (let i = 0; i < list.length; i += 1) {
-    const subject = list[i][1];
-    const action = list[i][2];
+  for (let i = 0; i < authList.length; i += 1) {
+    const subject = authList[i][1];
+    const action = authList[i][2];
     if (userRights.has(subject)) {
       userRights.get(subject)?.push(action);
     } else {

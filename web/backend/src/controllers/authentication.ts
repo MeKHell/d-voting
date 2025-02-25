@@ -122,13 +122,18 @@ authenticationRouter.get('/personal_info', async (req, res) => {
     res.status(401).send('Unauthenticated');
     return;
   }
-  const userPermissions = await getUserPermissions(req.session.userId);
+  const userPermissions = getUserPermissions(req.session.userId);
+  const adminList: number[] = await fetch(`${process.env.DELA_PROXY_URL}/evoting/adminlist`).then(
+    (x) => x.json().then((r) => (r as any | { Admins: number[] }).Admins)
+  );
+  const noAdmin = adminList.length === 0;
+  const isAdmin = adminList.includes(req.session.userId) || noAdmin;
   res.set('Access-Control-Allow-Origin', '*');
   res.json({
     sciper: req.session.userId,
     lastName: req.session.lastName,
     firstName: req.session.firstName,
     isLoggedIn: true,
-    authorization: Object.fromEntries(setMapAuthorization(userPermissions)),
+    authorization: Object.fromEntries(setMapAuthorization(await userPermissions, isAdmin)),
   });
 });
