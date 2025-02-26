@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import SpinnerIcon from 'components/utils/SpinnerIcon';
 import { UserAddIcon } from '@heroicons/react/outline';
 import ShortUniqueId from 'short-unique-id';
-import { FlashContext, FlashLevel } from 'index';
+import { AuthContext, FlashContext, FlashLevel } from 'index';
 import { UserRole } from 'types/userRole';
 import { ENDPOINT_ADD_ROLE } from 'components/utils/Endpoints';
 import AdminModal from './AdminModal';
@@ -25,12 +25,13 @@ const roles: string[] = [UserRole.Admin, UserRole.Operator];
 
 const AddAdminUserModal: FC<AddAdminUserModalProps> = ({ open, setOpen, handleAddRoleUser }) => {
   const { t } = useTranslation();
+  const authCtx = useContext(AuthContext);
   const fctx = useContext(FlashContext);
   const [postError, setPostError] = useState(null);
   const [, setIsPosting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sciperValue, setSciperValue] = useState('');
-  const [selectedRole, setSelectedRole] = useState(roles[0]);
+  const [selectedRole, setSelectedRole] = useState(UserRole.Operator);
 
   const handleCancel = () => {
     setOpen(false);
@@ -62,7 +63,7 @@ const AddAdminUserModal: FC<AddAdminUserModalProps> = ({ open, setOpen, handleAd
         const res = await saveMapping();
         if (!res) {
           setSciperValue('');
-          setSelectedRole(roles[0]);
+          setSelectedRole(selectedRole);
           handleAddRoleUser(userToAdd);
           fctx.addMessage(`${t('successAddUser')}`, FlashLevel.Info);
         }
@@ -102,7 +103,7 @@ const AddAdminUserModal: FC<AddAdminUserModalProps> = ({ open, setOpen, handleAd
               leaveFrom="opacity-100"
               leaveTo="opacity-0">
               <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                {roles.map((role, personIdx) => (
+                {(authCtx.isAdmin ? roles : [UserRole.Operator]).map((role, personIdx) => (
                   <Listbox.Option
                     key={personIdx}
                     className={({ active }) =>
