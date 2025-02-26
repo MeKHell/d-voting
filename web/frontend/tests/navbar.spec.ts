@@ -8,10 +8,12 @@ import {
   setUp,
 } from './shared';
 import { SCIPER_USER, mockLogout, mockPersonalInfo } from './mocks/api';
+import { mockAdminList } from './mocks/evoting';
 
 initI18n();
 
 test.beforeEach(async ({ page }) => {
+  await mockAdminList(page, [123456, 987564]);
   await mockPersonalInfo(page);
   await setUp(page, '/about');
 });

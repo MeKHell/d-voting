@@ -4,6 +4,27 @@ import Worker2 from './../json/api/proxies/dela-worker-2.json';
 import Worker3 from './../json/api/proxies/dela-worker-3.json';
 import { FORMID } from './shared';
 
+export async function mockAdminList(page, adminList: number[]) {
+  await page.unroute(`${process.env.DELA_PROXY_URL}/evoting/adminlist`);
+  await page.route(`${process.env.DELA_PROXY_URL}/evoting/adminlist`, async (route) => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    } else {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: `{"Admins": [${adminList.map((x) => x.toString()).join(', ')}]}`,
+      });
+    }
+  });
+}
+
 export async function mockForms(page: page, formList: string) {
   // clear current mock
   await page.unroute(`${process.env.DELA_PROXY_URL}/evoting/forms`);

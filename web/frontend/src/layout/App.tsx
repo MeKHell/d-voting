@@ -32,20 +32,22 @@ import ClientError from './ClientError';
 const App = () => {
   const RequireAuth = ({
     children,
-    auth,
+    admin = false,
+    operator = false,
   }: {
     children: JSX.Element;
-    auth?: string[];
+    admin?: boolean;
+    operator?: boolean;
   }): JSX.Element => {
     let location = useLocation();
 
     const authCtx = useContext(AuthContext);
     if (!authCtx.isLogged) {
       return <Navigate to={ROUTE_LOGIN} state={{ from: location }} replace />;
-    } else {
-      if (auth && !authCtx.isAllowed(auth[0], auth[1])) {
-        return <Navigate to={ROUTE_UNAUTHORIZED} state={{ from: location }} replace />;
-      }
+    } else if (admin && !authCtx.isAdmin) {
+      return <Navigate to={ROUTE_UNAUTHORIZED} state={{ from: location }} replace />;
+    } else if (operator && !authCtx.isOperator) {
+      return <Navigate to={ROUTE_UNAUTHORIZED} state={{ from: location }} replace />;
     }
     return children;
   };
@@ -64,7 +66,7 @@ const App = () => {
               <Route
                 path={ROUTE_FORM_CREATE}
                 element={
-                  <RequireAuth auth={['election', 'create']}>
+                  <RequireAuth operator>
                     <FormCreate />
                   </RequireAuth>
                 }
@@ -72,7 +74,7 @@ const App = () => {
               <Route
                 path={'/forms/:formId'}
                 element={
-                  <RequireAuth auth={['election', 'create']}>
+                  <RequireAuth operator>
                     <FormShow />
                   </RequireAuth>
                 }
@@ -81,7 +83,7 @@ const App = () => {
               <Route
                 path={ROUTE_BALLOT_SHOW + '/:formId'}
                 element={
-                  <RequireAuth auth={null}>
+                  <RequireAuth>
                     <BallotShow />
                   </RequireAuth>
                 }
@@ -89,7 +91,7 @@ const App = () => {
               <Route
                 path={ROUTE_ADMIN}
                 element={
-                  <RequireAuth auth={['roles', 'list']}>
+                  <RequireAuth admin>
                     <Admin />
                   </RequireAuth>
                 }

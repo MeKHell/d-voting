@@ -1,6 +1,6 @@
 import React, { FC, ReactElement, createContext, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { ENDPOINT_PERSONAL_INFO } from 'components/utils/Endpoints';
+import { ENDPOINT_PERSONAL_INFO, adminlist } from 'components/utils/Endpoints';
 
 import 'index.css';
 import App from 'layout/App';
@@ -22,8 +22,11 @@ if (process.env.NODE_ENV !== 'production' && process.env.REACT_APP_NOMOCK !== 'o
 const arr = new Map<String, Array<String>>();
 const defaultAuth = {
   isLogged: false,
+  sciper: 0,
   firstName: '',
   lastName: '',
+  isAdmin: false,
+  isOperator: false,
   authorization: arr,
   isAllowed: () => false,
 };
@@ -36,8 +39,11 @@ export const AuthContext = createContext<AuthState>(defaultAuth);
 
 export interface AuthState {
   isLogged: boolean;
+  sciper: number;
   firstName: string;
   lastName: string;
+  isAdmin: boolean;
+  isOperator: boolean;
   authorization: Map<String, Array<String>>;
   isAllowed: (subject: string, action: string) => boolean;
 }
@@ -233,6 +239,7 @@ const AppContainer = () => {
         }
         case 401: {
           result = {
+            sciper: 0,
             isLoggedIn: false,
             firstName: '',
             lastName: '',
@@ -245,10 +252,23 @@ const AppContainer = () => {
           throw new Error(`Unexpected status: ${response.status} - ${txt}`);
         }
       }
+      // wait for the default proxy to be set
+      await setDefaultProxy();
+      const admins = await fetch(adminlist(defaultProxyState.getProxy()), req);
+      let adminResult;
+      if (admins.status === 200) {
+        adminResult = await admins.json();
+      } else {
+        adminResult = { Admins: [] };
+      }
+      const isAdmin = adminResult.Admins.includes(result.sciper) || adminResult.Admins.length === 0;
       setAuth({
         isLogged: result.isLoggedIn,
         firstName: result.firstName,
         lastName: result.lastName,
+        sciper: result.sciper,
+        isAdmin: isAdmin,
+        isOperator: isAdmin,
         authorization: result.isLoggedIn ? new Map(Object.entries(result.authorization)) : arr,
         isAllowed: function (subject: string, action: string) {
           return (
@@ -257,10 +277,9 @@ const AppContainer = () => {
           );
         },
       });
-      // wait for the default proxy to be set
-      await setDefaultProxy();
       setContent(<App />);
     }
+
     fetchData().catch((e) => {
       setContent(<Failed>{e.toString()}</Failed>);
       console.log('error:', e);
