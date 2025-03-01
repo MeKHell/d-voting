@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strings"
 
@@ -977,6 +978,7 @@ func initializeAdminList(snap store.Snapshot, initialAdmin int, ctx serde.Contex
 	h := sha256.New()
 	h.Write([]byte(AdminListId))
 	formIDBuf := h.Sum(nil)
+	dela.Logger.Printf("Initilaizing the admin list")
 
 	adminList := types.AdminList{
 		AdminList: []int{initialAdmin},
@@ -1201,10 +1203,11 @@ func (e evotingCommand) getAdminList(snap store.Snapshot) (types.AdminList, erro
 	var form types.AdminList
 
 	form, err := types.AdminListFromStore(e.context, e.adminListFac, snap, AdminListId)
+	fmt.Printf("In evoting package admin list is : ")
+	fmt.Println(form)
 	if err != nil {
 		return form, xerrors.Errorf("failed to get the AdminList: %v", err)
 	}
-
 	return form, nil
 }
 

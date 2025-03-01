@@ -6,14 +6,11 @@ import { CheckIcon, SelectorIcon } from '@heroicons/react/solid';
 import { useTranslation } from 'react-i18next';
 import SpinnerIcon from 'components/utils/SpinnerIcon';
 import { UserAddIcon } from '@heroicons/react/outline';
-import ShortUniqueId from 'short-unique-id';
 import { AuthContext, FlashContext, FlashLevel } from 'index';
 import { UserRole } from 'types/userRole';
-import { ENDPOINT_ADD_ROLE } from 'components/utils/Endpoints';
+import { ENDPOINT_ADD_ADMIN } from 'components/utils/Endpoints';
 import AdminModal from './AdminModal';
 import usePostCall from 'components/utils/usePostCall';
-
-const uid = new ShortUniqueId({ length: 8 });
 
 type AddAdminUserModalProps = {
   open: boolean;
@@ -45,16 +42,23 @@ const AddAdminUserModal: FC<AddAdminUserModalProps> = ({ open, setOpen, handleAd
     }
   }, [fctx, t, postError]);
   const handleUserInput = (e: any) => {
-    setSciperValue(e.target.value);
+    const sciper = parseInt(e.target.value.trim());
+    if (isNaN(sciper)) {
+      fctx.addMessage(t('sciperNaN', { sciperStr: e.target.value.trim() }), FlashLevel.Error);
+    } else if (sciper > 999999 && sciper <= 9999999) {
+      fctx.addMessage(t('sciperOutOfRange', { sciper: sciper }), FlashLevel.Error);
+    } else {
+      setSciperValue(e.target.value);
+    }
   };
-  const userToAdd = { id: uid(), sciper: sciperValue, role: selectedRole };
+  const userToAdd = { TargetUserID: sciperValue };
   const saveMapping = async () => {
     const request = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userToAdd),
     };
-    return sendFetchRequest(ENDPOINT_ADD_ROLE, request, setIsPosting);
+    return sendFetchRequest(ENDPOINT_ADD_ADMIN, request, setIsPosting);
   };
   const handleAddUser = async () => {
     setLoading(true);

@@ -647,6 +647,9 @@ func (form *form) AdminList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 
 	adminList, err := types.AdminListFromStore(form.context, form.adminFac, form.orderingSvc.GetStore(), evoting.AdminListId)
+	fmt.Printf("In proxy package admin list is : ")
+	fmt.Println(adminList)
+
 	if err != nil && err.Error() != "No list found" {
 		InternalError(w, r, xerrors.Errorf("failed to get form: %v", err), nil)
 		return

@@ -137,6 +137,7 @@ function makeid(length: number) {
   }
   return result;
 }
+
 delaRouter.put('/forms/:formID', (req, res, next) => {
   const { formID } = req.params;
   if (!isAuthorized(req.session.userId, formID, PERMISSIONS.ACTIONS.OWN)) {
@@ -264,8 +265,19 @@ delaRouter.use('/*', (req, res) => {
     }
   }
 
-  // UserID for permission
-  bodyData.UserID = req.session.userId.toString();
+  const authorizationRegex = /\/evoting\/auth\/.*$/;
+  if (req.baseUrl.match(authorizationRegex)) {
+    req.baseUrl = req.baseUrl.slice(0, 12) + req.baseUrl.slice(17); // From '/api/evoting/auth/addadmin' to '/evoting/addadmin'
+    if (!req.session.userId) {
+      res.status(400).send('Unauthorized');
+      return;
+    }
+    console.log(`Base url in auth router:${req.baseUrl}`);
+    bodyData.PerformingUserID = req.session.userId.toString();
+  } else {
+    // UserID for permission
+    bodyData.UserID = req.session.userId.toString();
+  }
 
   const dataStr = JSON.stringify(bodyData);
 
