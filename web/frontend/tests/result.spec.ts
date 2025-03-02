@@ -45,7 +45,7 @@ test('Assert form titles are displayed correctly', async ({ page }) => {
       content.locator(
         `xpath=./div/div/div[2]/div/div[2]/div/div/div[${index + 1}]/div/div/div[1]/h2`
       )
-    ).toContainText(scaffold.Selects.at(0)!.Title.En);
+    ).toContainText(scaffold.Selects.at(0).Title.En);
   }
 });
 
@@ -106,9 +106,9 @@ test('Assert individual results are displayed correctly', async ({ page }) => {
           [false, false, true, false],
         ],
       ]
-        .at(i)!
+        .at(i)
         .at(index); // get results for this ballot and this form
-      for (const [j, choice] of scaffold.Selects.at(0)!.Choices.entries()) {
+      for (const [j, choice] of scaffold.Selects.at(0).Choices.entries()) {
         const resultRow = await content.locator(
           `xpath=./div/div/div[2]/div/div[2]/div/div/div[${index + 2}]/div[1]/div[1]/div[2]/div[${
             j + 1
@@ -117,7 +117,7 @@ test('Assert individual results are displayed correctly', async ({ page }) => {
         await expect(resultRow.locator('xpath=./div[2]')).toContainText(
           JSON.parse(choice.Choice).en
         );
-        if (result!.at(j)) {
+        if (result.at(j)) {
           await expect(resultRow.getByRole('checkbox')).toBeChecked();
         } else {
           await expect(resultRow.getByRole('checkbox')).not.toBeChecked();

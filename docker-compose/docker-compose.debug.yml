@@ -5,6 +5,9 @@ x-dela: &dela
     context: ../
     target: build
   env_file: ../.env
+  profiles:
+    - dela
+    - all
 x-dela-env: &dela-env
   PROXYKEY: ${PUBLIC_KEY}
   PROXY_LOG: info
@@ -72,6 +75,9 @@ services:
     volumes:
       - ../web/frontend/src:/web/frontend/src     # mount codebase for development
     env_file: ../.env
+    profiles:
+      - client
+      - all
     networks:
       d-voting:
         ipv4_address: 172.19.44.2
@@ -91,6 +97,9 @@ services:
     volumes:
       - backend-data:/data
       - ../web/backend/src:/web/backend/src       # mount codebase for development
+    profiles:
+      - client
+      - all
     networks:
       d-voting:
         ipv4_address: 172.19.44.3
@@ -103,6 +112,9 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ../web/backend/src/migration.sql:/docker-entrypoint-initdb.d/init.sql
+    profiles:
+      - client
+      - all
     networks:
       d-voting:
         ipv4_address: 172.19.44.4

@@ -2,7 +2,6 @@ package types
 
 import (
 	"crypto/sha256"
-	"fmt"
 
 	"go.dedis.ch/dela/core/store"
 	"go.dedis.ch/dela/serde"
@@ -103,8 +102,6 @@ func (adminList *AdminList) RemoveAdmin(userID string) error {
 
 func AdminListFromStore(ctx serde.Context, adminListFac serde.Factory, store store.Readable, adminListId string) (AdminList, error) {
 	adminList := AdminList{}
-	fmt.Print("Current store is: ")
-	fmt.Println(store)
 
 	h := sha256.New()
 	h.Write([]byte(adminListId))
