@@ -10,9 +10,6 @@ type FormRowProps = {
   form: LightFormInfo;
 };
 
-const SUBJECT_ELECTION = 'election';
-const ACTION_CREATE = 'create';
-
 const FormRow: FC<FormRowProps> = ({ form }) => {
   const Blocklist = process.env.REACT_APP_BLOCKLIST?.split(',') ?? [];
   const [titles, setTitles] = useState<any>({});
@@ -32,7 +29,7 @@ const FormRow: FC<FormRowProps> = ({ form }) => {
     }
   });
   const formTitle = formRowI18n.t('title', { ns: 'form', fallbackLng: 'en' });
-  const isAdmin = authCtx.isLogged && authCtx.isAllowed(SUBJECT_ELECTION, ACTION_CREATE);
+  const isAdmin = authCtx.isLogged && authCtx.isOperator;
   const isBlocked = Blocklist.includes(form.FormID);
   if (!isAdmin && isBlocked) return null;
   const styleText = isBlocked

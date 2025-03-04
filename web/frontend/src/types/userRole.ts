@@ -1,5 +1,4 @@
 interface User {
-  id: string;
   sciper: string;
   role: UserRole;
 }
@@ -7,7 +6,6 @@ interface User {
 export const enum UserRole {
   Admin = 'admin',
   Operator = 'operator',
-  Voter = 'voter',
 }
 
 export type { User };

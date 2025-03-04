@@ -1,6 +1,6 @@
 import React, { FC, useContext, useEffect, useMemo, useState } from 'react';
-import { ENDPOINT_USER_RIGHTS } from 'components/utils/Endpoints';
-import { FlashContext, FlashLevel } from 'index';
+import { adminlist } from 'components/utils/Endpoints';
+import { AuthContext, FlashContext, FlashLevel, ProxyContext } from 'index';
 import Loading from 'pages/Loading';
 import { useTranslation } from 'react-i18next';
 import { fetchCall } from 'components/utils/fetchCall';
@@ -10,7 +10,9 @@ import * as endpoints from 'components/utils/Endpoints';
 
 const Admin: FC = () => {
   const { t } = useTranslation();
+  const authCtx = useContext(AuthContext);
   const fctx = useContext(FlashContext);
+  const proxyCtx = useContext(ProxyContext);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nodeProxyLoading, setNodeProxyLoading] = useState(true);
@@ -20,18 +22,20 @@ const Admin: FC = () => {
   const abortController = useMemo(() => new AbortController(), []);
 
   useEffect(() => {
-    fetchCall(
-      endpoints.getProxiesAddresses,
-      {
-        method: 'GET',
-        signal: abortController.signal,
-      },
-      setNodeProxyObject,
-      setNodeProxyLoading
-    ).catch((e) => {
-      setNodeProxyError(e);
-    });
-  }, [abortController.signal]);
+    if (authCtx.isAdmin) {
+      fetchCall(
+        endpoints.getProxiesAddresses,
+        {
+          method: 'GET',
+          signal: abortController.signal,
+        },
+        setNodeProxyObject,
+        setNodeProxyLoading
+      ).catch((e) => {
+        setNodeProxyError(e);
+      });
+    }
+  }, [abortController.signal, authCtx.isAdmin]);
 
   const [nodeProxyAddresses, setNodeProxyAddresses] = useState<Map<string, string>>(null);
 
@@ -63,13 +67,14 @@ const Admin: FC = () => {
   }, [abortController, t, nodeProxyObject, nodeProxyError]);
 
   useEffect(() => {
-    fetch(ENDPOINT_USER_RIGHTS)
+    fetch(adminlist(proxyCtx.getProxy()))
       .then((resp) => {
         setLoading(false);
         if (resp.status === 200) {
           const jsonData = resp.json();
           jsonData.then((result) => {
-            setUsers(result);
+            result.map((x) => ({ sciper: x.toString(), role: 'admin' }));
+            setUsers(result.Admins);
           });
         } else {
           setUsers([]);
@@ -94,12 +99,14 @@ const Admin: FC = () => {
       </div>
 
       <AdminTable users={users} setUsers={setUsers} />
-      <div className="mt-4 mb-8">
-        <DKGTable
-          nodeProxyAddresses={nodeProxyAddresses}
-          setNodeProxyAddresses={setNodeProxyAddresses}
-        />
-      </div>
+      {authCtx.isAdmin && (
+        <div className="mt-4 mb-8">
+          <DKGTable
+            nodeProxyAddresses={nodeProxyAddresses}
+            setNodeProxyAddresses={setNodeProxyAddresses}
+          />
+        </div>
+      )}
     </div>
   ) : (
     <Loading />

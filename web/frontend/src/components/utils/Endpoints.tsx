@@ -30,9 +30,8 @@ export const getProxiesAddresses = '/api/proxies';
 // public information can be directly fetched from dela nodes
 export const form = (proxy: string, FormID: string) =>
   new URL(`/evoting/forms/${FormID}`, proxy).href;
-export const forms = (proxy: string) => {
-  return new URL('/evoting/forms', proxy).href;
-};
+export const forms = (proxy: string) => new URL('/evoting/forms', proxy).href;
+export const adminlist = (proxy: string) => new URL('/evoting/adminlist', proxy).href;
 
 // get the default proxy address
 export const getProxyConfig = '/api/config/proxy';

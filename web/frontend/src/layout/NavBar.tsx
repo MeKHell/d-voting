@@ -76,7 +76,7 @@ const MobileMenu = ({ authCtx, handleLogout, fctx, t }) => (
                     </Popover.Button>
                   </NavLink>
                 }
-                {authCtx.isLogged && authCtx.isAllowed(SUBJECT_ROLES, ACTION_ADD) && (
+                {authCtx.isLogged && authCtx.isOperator && (
                   <NavLink to={ROUTE_ADMIN}>
                     <Popover.Button className=" w-full -m-3 p-3 flex items-center rounded-md hover:bg-gray-50">
                       <span className="ml-3 text-base font-medium text-gray-900">
@@ -97,7 +97,7 @@ const MobileMenu = ({ authCtx, handleLogout, fctx, t }) => (
               </nav>
             </div>
             <div className="pt-4">
-              {authCtx.isLogged && authCtx.isAllowed(SUBJECT_ELECTION, ACTION_CREATE) && (
+              {authCtx.isLogged && authCtx.isOperator && (
                 <NavLink to={ROUTE_FORM_CREATE}>
                   <Popover.Button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#ff0000] hover:bg-[#b51f1f]">
                     <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -157,7 +157,7 @@ const MobileMenu = ({ authCtx, handleLogout, fctx, t }) => (
 
 const RightSideNavBar = ({ authCtx, handleLogout, handleChangeId, fctx, t }) => (
   <div className="absolute hidden inset-y-0 right-0 flex items-center pr-2 md:static md:inset-auto md:flex md:ml-6 md:pr-0">
-    {authCtx.isLogged && authCtx.isAllowed(SUBJECT_ELECTION, ACTION_CREATE) && (
+    {authCtx.isLogged && authCtx.isOperator && (
       <NavLink title={t('navBarCreateForm')} to={ROUTE_FORM_CREATE}>
         <div className="whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border-2 border-[#ff0000] rounded-md shadow-sm text-base font-medium text-[#ff0000] bg-white hover:bg-[#ff0000] hover:text-white">
           <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -199,7 +199,7 @@ const LeftSideNavBar = ({ authCtx, t }) => (
           className={'text-black text-lg hover:text-[#b51f1f]'}>
           {t('navBarStatus')}
         </NavLink>
-        {authCtx.isLogged && authCtx.isAllowed(SUBJECT_ROLES, ACTION_LIST) && (
+        {authCtx.isLogged && authCtx.isOperator && (
           <NavLink to={ROUTE_ADMIN} className={'text-black text-lg hover:text-[#b51f1f]'}>
             Admin
           </NavLink>
