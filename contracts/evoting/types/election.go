@@ -42,11 +42,11 @@ const (
 	Canceled Status = 6
 )
 
-// BallotsPerBatch to improve performance, so that (de)serializing only touches
+// BallotsPerBlock to improve performance, so that (de)serializing only touches
 // 100 ballots at a time.
-var BallotsPerBatch = uint32(100)
+var BallotsPerBlock = uint32(100)
 
-// TestCastBallots if true, automatically fills every batch with ballots.
+// TestCastBallots if true, automatically fills every block with ballots.
 var TestCastBallots = false
 
 // formFormat contains the supported formats for the form. Right now
@@ -78,17 +78,18 @@ type Form struct {
 	// to pad smaller ballots such that all  ballots cast have the same size
 	BallotSize int
 
-	// SuffragiaStoreKeys holds a slice of storage-keys to 0 or more Suffragia.
+	// SuffragiaIDs holds a slice of IDs to slices of SuffragiaIDs.
 	// This is to optimize the time it takes to (De)serialize a Form.
-	SuffragiaStoreKeys [][]byte
+	SuffragiaIDs [][]byte
 
 	// BallotCount is the total number of ballots cast, including double
 	// ballots.
 	BallotCount uint32
 
-	// SuffragiaHashes holds a slice of hashes to all SuffragiaStoreKeys.
-	// In case a Form has also to be proven to be correct outside the nodes,
-	// the hashes are needed to prove the Suffragia are correct.
+	// SuffragiaHashes holds a slice of hashes to all SuffragiaIDs.
+	// LG: not really sure if this is needed. In case a Form has also to be
+	// proven to be correct outside the nodes, the hashes are definitely
+	// needed.
 	SuffragiaHashes [][]byte
 
 	// ShuffleInstances is all the shuffles, along with their proof and identity
@@ -203,9 +204,8 @@ func (e *Form) ChunksPerBallot() int {
 // CastVote stores the new vote in the memory.
 func (s *Form) CastVote(ctx serde.Context, st store.Snapshot, userID string, ciphervote Ciphervote) error {
 	var suff Suffragia
-	var batchID []byte
-
-	if s.BallotCount%BallotsPerBatch == 0 {
+	var blockID []byte
+	if s.BallotCount%BallotsPerBlock == 0 {
 		// Need to create a random ID for storing the ballots.
 		// H( formID | ballotcount )
 		// should be random enough, even if it's previsible.
@@ -216,43 +216,42 @@ func (s *Form) CastVote(ctx serde.Context, st store.Snapshot, userID string, cip
 		h := sha256.New()
 		h.Write(id)
 		binary.LittleEndian.PutUint32(id, s.BallotCount)
-		batchID = h.Sum(id[0:4])[:32]
-
-		err = st.Set(batchID, []byte{})
+		blockID = h.Sum(id[0:4])[:32]
+		err = st.Set(blockID, []byte{})
 		if err != nil {
-			return xerrors.Errorf("couldn't store new ballot batch: %v", err)
+			return xerrors.Errorf("couldn't store new ballot block: %v", err)
 		}
-		s.SuffragiaStoreKeys = append(s.SuffragiaStoreKeys, batchID)
+		s.SuffragiaIDs = append(s.SuffragiaIDs, blockID)
 		s.SuffragiaHashes = append(s.SuffragiaHashes, []byte{})
 	} else {
-		batchID = s.SuffragiaStoreKeys[len(s.SuffragiaStoreKeys)-1]
-		buf, err := st.Get(batchID)
+		blockID = s.SuffragiaIDs[len(s.SuffragiaIDs)-1]
+		buf, err := st.Get(blockID)
 		if err != nil {
-			return xerrors.Errorf("couldn't get ballots batch: %v", err)
+			return xerrors.Errorf("couldn't get ballots block: %v", err)
 		}
 		format := suffragiaFormat.Get(ctx.GetFormat())
 		ctx = serde.WithFactory(ctx, CiphervoteKey{}, CiphervoteFactory{})
 		msg, err := format.Decode(ctx, buf)
 		if err != nil {
-			return xerrors.Errorf("couldn't unmarshal ballots batch in cast: %v", err)
+			return xerrors.Errorf("couldn't unmarshal ballots block in cast: %v", err)
 		}
 		suff = msg.(Suffragia)
 	}
 
 	suff.CastVote(userID, ciphervote)
 	if TestCastBallots {
-		for i := uint32(1); i < BallotsPerBatch; i++ {
+		for i := uint32(1); i < BallotsPerBlock; i++ {
 			suff.CastVote(fmt.Sprintf("%s-%d", userID, i), ciphervote)
 		}
-		s.BallotCount += BallotsPerBatch - 1
+		s.BallotCount += BallotsPerBlock - 1
 	}
 	buf, err := suff.Serialize(ctx)
 	if err != nil {
-		return xerrors.Errorf("couldn't marshal ballots batch: %v", err)
+		return xerrors.Errorf("couldn't marshal ballots block: %v", err)
 	}
-	err = st.Set(batchID, buf)
+	err = st.Set(blockID, buf)
 	if err != nil {
-		xerrors.Errorf("couldn't set new ballots batch: %v", err)
+		xerrors.Errorf("couldn't set new ballots block: %v", err)
 	}
 	s.BallotCount += 1
 	return nil
@@ -264,16 +263,16 @@ func (s *Form) CastVote(ctx serde.Context, st store.Snapshot, userID string, cip
 // the latest ballot.
 func (s *Form) Suffragia(ctx serde.Context, rd store.Readable) (Suffragia, error) {
 	var suff Suffragia
-	for _, id := range s.SuffragiaStoreKeys {
+	for _, id := range s.SuffragiaIDs {
 		buf, err := rd.Get(id)
 		if err != nil {
-			return suff, xerrors.Errorf("couldn't get ballot batch: %v", err)
+			return suff, xerrors.Errorf("couldn't get ballot block: %v", err)
 		}
 		format := suffragiaFormat.Get(ctx.GetFormat())
 		ctx = serde.WithFactory(ctx, CiphervoteKey{}, CiphervoteFactory{})
 		msg, err := format.Decode(ctx, buf)
 		if err != nil {
-			return suff, xerrors.Errorf("couldn't unmarshal ballots batch in cast: %v", err)
+			return suff, xerrors.Errorf("couldn't unmarshal ballots block in cast: %v", err)
 		}
 		suffTmp := msg.(Suffragia)
 		for i, uid := range suffTmp.UserIDs {
